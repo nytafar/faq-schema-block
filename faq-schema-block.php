@@ -3,7 +3,7 @@
  * Plugin Name: FAQ Schema Block
  * Plugin URI: https://jellum.net/
  * Description: A simple and clean Gutenberg Block for FAQ with proper schema.org implementation.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Lasse Jellum
  * Author URI: https://jellum.net/
  * Text Domain: faq-schema-block
@@ -271,19 +271,30 @@ class FAQ_Schema_Block {
 
         foreach ($faq_blocks as $index => $block) {
             if (!empty($block['attrs']['question']) && !empty($block['attrs']['answer'])) {
-                $schema['mainEntity'][] = array(
+                $faq_item = array(
                     '@type'          => 'Question',
                     '@id'            => get_permalink() . '#faq-' . ($index + 1),
                     'name'           => wp_strip_all_tags($block['attrs']['question']),
                     'acceptedAnswer' => array(
                         '@type' => 'Answer',
                         'text'  => wp_strip_all_tags($block['attrs']['answer'])
-                    ),
-                    'mainEntityOfPage' => array(
-                        '@type' => 'Product',
-                        '@id'   => get_permalink() . '#product'
                     )
                 );
+
+                // Add product reference only on WooCommerce product pages
+                if (function_exists('is_product') && is_product()) {
+                    $faq_item['mainEntityOfPage'] = array(
+                        '@type' => 'Product',
+                        '@id'   => get_permalink() . '#product'
+                    );
+                } else {
+                    $faq_item['isPartOf'] = array(
+                        '@type' => 'WebPage',
+                        '@id'   => get_permalink() . '#webpage'
+                    );
+                }
+
+                $schema['mainEntity'][] = $faq_item;
             }
         }
 
