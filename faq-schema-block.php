@@ -30,12 +30,7 @@ class FAQ_Schema_Block {
 	 */
 	private static $instance;
 
-	/**
-	 * Stored FAQ items for schema.
-	 *
-	 * @var array
-	 */
-	private $faq_items = array();
+
 
 	/**
 	 * Whether the current page has FAQ blocks.
@@ -94,6 +89,20 @@ class FAQ_Schema_Block {
 				'editor_script' => 'faq-schema-block-editor',
 				'editor_style'  => 'faq-schema-block-editor-style',
 				'render_callback' => array( $this, 'render_block' ),
+				'attributes' => array(
+					'question' => array(
+						'type' => 'string',
+						'default' => ''
+					),
+					'answer' => array(
+						'type' => 'string',
+						'default' => ''
+					),
+					'id' => array(
+						'type' => 'string',
+						'default' => ''
+					)
+				)
 			)
 		);
 
@@ -111,20 +120,6 @@ class FAQ_Schema_Block {
      * @return string The block content.
      */
     public function process_faq_block( $block_content, $block ) {
-        error_log('Processing block: ' . print_r($block, true));
-        if ( 'faq-schema-block/faq' === $block['blockName'] && ! empty( $block['attrs'] ) ) {
-            error_log('Found FAQ block with attrs: ' . print_r($block['attrs'], true));
-            $question = isset( $block['attrs']['question'] ) ? $block['attrs']['question'] : '';
-            $answer = isset( $block['attrs']['answer'] ) ? $block['attrs']['answer'] : '';
-            
-            if ( $question && $answer ) {
-                error_log('Adding FAQ item: ' . $question);
-                $this->faq_items[] = array(
-                    'question' => $question,
-                    'answer'   => $answer,
-                );
-            }
-        }
         return $block_content;
     }
 
@@ -135,9 +130,12 @@ class FAQ_Schema_Block {
     * @return string The block HTML.
     */
     public function render_block( $attributes ) {
+        error_log('Render block called with attributes: ' . print_r($attributes, true));
         // Get the saved content from attributes
         $question = isset( $attributes['question'] ) ? $attributes['question'] : '';
         $answer = isset( $attributes['answer'] ) ? $attributes['answer'] : '';
+
+
         $id = isset( $attributes['id'] ) ? $attributes['id'] : 'faq-' . uniqid();
 
         // Inline styles
@@ -227,36 +225,71 @@ class FAQ_Schema_Block {
     /**
      * Output schema.org JSON-LD in head.
      */
+    private function parse_blocks($blocks = array()) {
+        global $post;
+        $block_data = array();
+        
+        if (!$post) {
+            return $block_data;
+        }
+        
+        if (empty($blocks)) {
+            $blocks = isset($post->post_content) ? parse_blocks($post->post_content) : array();
+        }
+        
+        if (!empty($blocks)) {
+            foreach ($blocks as $block) {
+                if ('faq-schema-block/faq' === $block['blockName']) {
+                    $block_data[] = $block;
+                    continue;
+                }
+                // Search in nested blocks
+                if (!empty($block['innerBlocks'])) {
+                    $block_data = array_merge($block_data, $this->parse_blocks($block['innerBlocks']));
+                }
+            }
+        }
+        return $block_data;
+    }
+
     public function output_schema() {
-        error_log('Output schema called. FAQ items: ' . print_r($this->faq_items, true));
-		global $post;
+        if (!is_singular()) {
+            return;
+        }
 
-		// Only output schema if we have FAQ items and we're on a single post/page.
-		if ( empty( $this->faq_items ) || ! is_singular() ) {
-			return;
-		}
+        $faq_blocks = $this->parse_blocks();
+        if (empty($faq_blocks)) {
+            return;
+        }
 
-		// Build schema data.
-		$schema = array(
-			'@context' => 'https://schema.org',
-			'@type'    => 'FAQPage',
-			'mainEntity' => array(),
-		);
+        // Build schema data
+        $schema = array(
+            '@context' => 'https://schema.org',
+            '@type'    => 'FAQPage',
+            'mainEntity' => array()
+        );
 
-		// Add each FAQ item to the schema.
-		foreach ( $this->faq_items as $index => $item ) {
-			$schema['mainEntity'][] = array(
-				'@type'          => 'Question',
-				'name'           => $item['question'],
-				'acceptedAnswer' => array(
-					'@type' => 'Answer',
-					'text'  => $item['answer'],
-				),
-			);
-		}
+        foreach ($faq_blocks as $index => $block) {
+            if (!empty($block['attrs']['question']) && !empty($block['attrs']['answer'])) {
+                $schema['mainEntity'][] = array(
+                    '@type'          => 'Question',
+                    '@id'            => get_permalink() . '#faq-' . ($index + 1),
+                    'name'           => wp_strip_all_tags($block['attrs']['question']),
+                    'acceptedAnswer' => array(
+                        '@type' => 'Answer',
+                        'text'  => wp_strip_all_tags($block['attrs']['answer'])
+                    ),
+                    'mainEntityOfPage' => array(
+                        '@type' => 'Product',
+                        '@id'   => get_permalink() . '#product'
+                    )
+                );
+            }
+        }
 
-		// Output the schema JSON-LD.
-		echo '<script type="application/ld+json">' . wp_json_encode( $schema ) . '</script>' . "\n";
+        if (!empty($schema['mainEntity'])) {
+            echo '<script type="application/ld+json">' . wp_json_encode($schema) . '</script>' . "\n";
+        }
 	}
 }
 
