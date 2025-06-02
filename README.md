@@ -2,9 +2,9 @@
 
 A clean, performant FAQ block with smart schema.org implementation, optimized for both regular pages and WooCommerce products.
 
-![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/faq-schema-block)
-![WordPress Plugin Required PHP Version](https://img.shields.io/wordpress/plugin/required-php/faq-schema-block)
-![WordPress Plugin: Tested WP Version](https://img.shields.io/wordpress/plugin/tested/faq-schema-block)
+![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![PHP Version](https://img.shields.io/badge/php-%3E%3D7.0-green.svg)
+![WordPress Version](https://img.shields.io/badge/wordpress-6.5%20tested-green.svg)
 
 ## Features
 
