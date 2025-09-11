@@ -136,7 +136,7 @@ class FAQ_Schema_Block {
         $answer = isset( $attributes['answer'] ) ? $attributes['answer'] : '';
 
 
-        $id = isset( $attributes['id'] ) ? $attributes['id'] : 'faq-' . uniqid();
+        $id = ! empty( $attributes['id'] ) ? $attributes['id'] : 'faq-' . uniqid();
 
         // Inline styles
         $styles = '
@@ -188,7 +188,7 @@ class FAQ_Schema_Block {
         $output .= '<style>' . $styles . '</style>';
         $output .= '<input type="checkbox" id="' . esc_attr( $id ) . '" class="faq-schema-toggle" />';
         $output .= '<label for="' . esc_attr( $id ) . '" class="faq-schema-question">' . wp_kses_post( $question ) . '</label>';
-        $output .= '<div class="faq-schema-answer">' . wp_kses_post( $answer ) . '</div>';
+        $output .= '<div class="faq-schema-answer">' . do_blocks( $answer ) . '</div>';
         $output .= '</div>';
 
         return $output;
