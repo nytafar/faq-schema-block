@@ -40,6 +40,13 @@ class FAQ_Schema_Block {
 	private $has_faq_block = false;
 
 	/**
+	 * Whether the styles have been outputted.
+	 *
+	 * @var bool
+	 */
+	private $styles_loaded = false;
+
+	/**
 	 * Get an instance of this class.
 	 */
 	public static function get_instance() {
@@ -138,54 +145,61 @@ class FAQ_Schema_Block {
 
         $id = ! empty( $attributes['id'] ) ? $attributes['id'] : 'faq-' . uniqid();
 
-        // Inline styles
-        $styles = '
-        .faq-schema-item {
-            margin-bottom: 1em;
+        $output = '';
+
+        // Load styles only once (unless disabled via filter)
+        if ( ! $this->styles_loaded && ! apply_filters( 'faq_schema_block_disable_inline_styles', false ) ) {
+            // Inline styles
+            $styles = '
+            .faq-schema-item {
+                margin-bottom: 1em;
+            }
+            .faq-schema-item input[type="checkbox"] {
+                display: none;
+            }
+            .faq-schema-question {
+                display: block;
+                margin: 0;
+                padding: 0.5em 2em 0.5em 0;
+                cursor: pointer;
+                position: relative;
+                font-size: 1.1em;
+            }
+            .faq-schema-question:after {
+                content: "+";
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 1.5em;
+                line-height: 1;
+                color: #666;
+                transition: transform 0.2s ease;
+            }
+            .faq-schema-item input[type="checkbox"]:checked ~ .faq-schema-question:after {
+                content: "−";
+            }
+            .faq-schema-answer {
+                height: 0;
+                overflow: hidden;
+                transition: height 0.25s ease-in-out;
+                line-height: 1.6;
+                box-sizing: border-box;
+                padding-top: 0;
+            }
+            .faq-schema-item input[type="checkbox"]:checked ~ .faq-schema-answer {
+                height: var(--answer-height, auto);
+            }';
+
+            $output .= '<style>' . $styles . '</style>';
+            $this->styles_loaded = true;
         }
-        .faq-schema-item input[type="checkbox"] {
-            display: none;
-        }
-        .faq-schema-question {
-            display: block;
-            margin: 0;
-            padding: 0.5em 2em 0.5em 0;
-            cursor: pointer;
-            position: relative;
-            font-size: 1.1em;
-        }
-        .faq-schema-question:after {
-            content: "+";
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.5em;
-            line-height: 1;
-            color: #666;
-            transition: transform 0.2s ease;
-        }
-        .faq-schema-item input[type="checkbox"]:checked ~ .faq-schema-question:after {
-            content: "−";
-        }
-        .faq-schema-answer {
-            height: 0;
-            overflow: hidden;
-            transition: height 0.25s ease-in-out;
-            line-height: 1.6;
-            box-sizing: border-box;
-            padding-top: 0;
-        }
-        .faq-schema-item input[type="checkbox"]:checked ~ .faq-schema-answer {
-            height: var(--answer-height, auto);
-        }';
 
         // Mark that we have an FAQ block
         $this->has_faq_block = true;
 
         // Output HTML
-        $output = '<div class="faq-schema-item">';
-        $output .= '<style>' . $styles . '</style>';
+        $output .= '<div class="faq-schema-item">';
         $output .= '<input type="checkbox" id="' . esc_attr( $id ) . '" class="faq-schema-toggle" />';
         $output .= '<label for="' . esc_attr( $id ) . '" class="faq-schema-question">' . wp_kses_post( $question ) . '</label>';
         $output .= '<div class="faq-schema-answer">' . do_blocks( $answer ) . '</div>';
@@ -195,7 +209,7 @@ class FAQ_Schema_Block {
     }
 
     /**
-     * Add the height calculation script if FAQ blocks are present.
+     * Add scripts for FAQ functionality if FAQ blocks are present.
      */
     public function maybe_add_script() {
         if (!$this->has_faq_block) {
@@ -205,9 +219,31 @@ class FAQ_Schema_Block {
         ?>
         <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Set answer heights for CSS transitions
             document.querySelectorAll('.faq-schema-answer').forEach(answer => {
                 const height = answer.scrollHeight;
                 answer.style.setProperty('--answer-height', height + 'px');
+            });
+            
+            // Make entire FAQ item clickable
+            document.querySelectorAll('.faq-schema-item').forEach(item => {
+                item.style.cursor = 'pointer';
+                item.addEventListener('click', function(e) {
+                    // Prevent default behavior for links inside the FAQ
+                    if (e.target.tagName === 'A') {
+                        return;
+                    }
+                    
+                    // Find the checkbox and toggle it
+                    const checkbox = this.querySelector('.faq-schema-toggle');
+                    if (checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        
+                        // Create and dispatch change event
+                        const event = new Event('change');
+                        checkbox.dispatchEvent(event);
+                    }
+                });
             });
         });
         </script>
@@ -220,6 +256,7 @@ class FAQ_Schema_Block {
     public function reset_faq_items() {
         $this->faq_items = array();
         $this->has_faq_block = false;
+        $this->styles_loaded = false;
     }
 
     /**
