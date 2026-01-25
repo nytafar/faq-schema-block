@@ -14,110 +14,121 @@
  */
 
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (!defined('ABSPATH')) {
+    exit;
 }
 
 /**
  * Main FAQ Schema Block Class
  */
-class FAQ_Schema_Block {
+class FAQ_Schema_Block
+{
 
-	/**
-	 * Instance of this class.
-	 *
-	 * @var object
-	 */
-	private static $instance;
+    /**
+     * Instance of this class.
+     *
+     * @var object
+     */
+    private static $instance;
 
 
 
-	/**
-	 * Whether the current page has FAQ blocks.
-	 *
-	 * @var bool
-	 */
-	private $has_faq_block = false;
+    /**
+     * Whether the current page has FAQ blocks.
+     *
+     * @var bool
+     */
+    private $has_faq_block = false;
 
-	/**
-	 * Whether the styles have been outputted.
-	 *
-	 * @var bool
-	 */
-	private $styles_loaded = false;
+    /**
+     * Whether the styles have been outputted.
+     *
+     * @var bool
+     */
+    private $styles_loaded = false;
 
-	/**
-	 * Get an instance of this class.
-	 */
-	public static function get_instance() {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
+    /**
+     * FAQ items array.
+     *
+     * @var array
+     */
+    private $faq_items = array();
 
-	/**
-	 * Constructor.
-	 */
-	public function __construct() {
-		add_action( 'init', array( $this, 'register_block' ) );
-		add_action( 'wp_head', array( $this, 'output_schema' ), 100 );
-		add_filter( 'render_block', array( $this, 'process_faq_block' ), 10, 2 );
-		add_action( 'wp_footer', array( $this, 'maybe_add_script' ) );
-		// Reset FAQ items on each page load
-		add_action( 'wp', array( $this, 'reset_faq_items' ) );
-	}
+    /**
+     * Get an instance of this class.
+     */
+    public static function get_instance()
+    {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
 
-	/**
-	 * Register the FAQ block.
-	 */
-	public function register_block() {
-		// Register block script.
-		wp_register_script(
-			'faq-schema-block-editor',
-			plugins_url( 'block/dist/index.js', __FILE__ ),
-			array( 'wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor', 'wp-components' ),
-			filemtime( plugin_dir_path( __FILE__ ) . 'block/dist/index.js' ),
-			true
-		);
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        add_action('init', array($this, 'register_block'));
+        add_action('wp_head', array($this, 'output_schema'), 100);
+        add_filter('render_block', array($this, 'process_faq_block'), 10, 2);
+        add_action('wp_footer', array($this, 'maybe_add_script'));
+        // Reset FAQ items on each page load
+        add_action('wp', array($this, 'reset_faq_items'));
+    }
 
-		// Register editor styles.
-		wp_register_style(
-			'faq-schema-block-editor-style',
-			plugins_url( 'block/dist/editor.css', __FILE__ ),
-			array(),
-			filemtime( plugin_dir_path( __FILE__ ) . 'block/dist/editor.css' )
-		);
+    /**
+     * Register the FAQ block.
+     */
+    public function register_block()
+    {
+        // Register block script.
+        wp_register_script(
+            'faq-schema-block-editor',
+            plugins_url('block/dist/index.js', __FILE__),
+            array('wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor', 'wp-components'),
+            filemtime(plugin_dir_path(__FILE__) . 'block/dist/index.js'),
+            true
+        );
 
-		// Register block.
-		register_block_type(
-			'faq-schema-block/faq',
-			array(
-				'editor_script' => 'faq-schema-block-editor',
-				'editor_style'  => 'faq-schema-block-editor-style',
-				'render_callback' => array( $this, 'render_block' ),
-				'attributes' => array(
-					'question' => array(
-						'type' => 'string',
-						'default' => ''
-					),
-					'answer' => array(
-						'type' => 'string',
-						'default' => ''
-					),
-					'id' => array(
-						'type' => 'string',
-						'default' => ''
-					)
-				)
-			)
-		);
+        // Register editor styles.
+        wp_register_style(
+            'faq-schema-block-editor-style',
+            plugins_url('block/dist/editor.css', __FILE__),
+            array(),
+            filemtime(plugin_dir_path(__FILE__) . 'block/dist/editor.css')
+        );
 
-		// Set translations.
-		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( 'faq-schema-block-editor', 'faq-schema-block' );
-		}
-	}
+        // Register block.
+        register_block_type(
+            'faq-schema-block/faq',
+            array(
+                'editor_script' => 'faq-schema-block-editor',
+                'editor_style' => 'faq-schema-block-editor-style',
+                'render_callback' => array($this, 'render_block'),
+                'attributes' => array(
+                    'question' => array(
+                        'type' => 'string',
+                        'default' => ''
+                    ),
+                    'answer' => array(
+                        'type' => 'string',
+                        'default' => ''
+                    ),
+                    'id' => array(
+                        'type' => 'string',
+                        'default' => ''
+                    )
+                )
+            )
+        );
+
+        // Set translations.
+        if (function_exists('wp_set_script_translations')) {
+            wp_set_script_translations('faq-schema-block-editor', 'faq-schema-block');
+        }
+    }
 
     /**
      * Process FAQ block to collect schema data.
@@ -126,29 +137,31 @@ class FAQ_Schema_Block {
      * @param array  $block The block data.
      * @return string The block content.
      */
-    public function process_faq_block( $block_content, $block ) {
+    public function process_faq_block($block_content, $block)
+    {
         return $block_content;
     }
 
     /**
-    * Render the FAQ block.
-    *
-    * @param array $attributes The block attributes.
-    * @return string The block HTML.
-    */
-    public function render_block( $attributes ) {
-        error_log('Render block called with attributes: ' . print_r($attributes, true));
+     * Render the FAQ block.
+     *
+     * @param array $attributes The block attributes.
+     * @return string The block HTML.
+     */
+    public function render_block($attributes)
+    {
+
         // Get the saved content from attributes
-        $question = isset( $attributes['question'] ) ? $attributes['question'] : '';
-        $answer = isset( $attributes['answer'] ) ? $attributes['answer'] : '';
+        $question = isset($attributes['question']) ? $attributes['question'] : '';
+        $answer = isset($attributes['answer']) ? $attributes['answer'] : '';
 
 
-        $id = ! empty( $attributes['id'] ) ? $attributes['id'] : 'faq-' . uniqid();
+        $id = !empty($attributes['id']) ? $attributes['id'] : 'faq-' . uniqid();
 
         $output = '';
 
         // Load styles only once (unless disabled via filter)
-        if ( ! $this->styles_loaded && ! apply_filters( 'faq_schema_block_disable_inline_styles', false ) ) {
+        if (!$this->styles_loaded && !apply_filters('faq_schema_block_disable_inline_styles', false)) {
             // Inline styles
             $styles = '
             .faq-schema-item {
@@ -200,9 +213,9 @@ class FAQ_Schema_Block {
 
         // Output HTML
         $output .= '<div class="faq-schema-item">';
-        $output .= '<input type="checkbox" id="' . esc_attr( $id ) . '" class="faq-schema-toggle" />';
-        $output .= '<label for="' . esc_attr( $id ) . '" class="faq-schema-question">' . wp_kses_post( $question ) . '</label>';
-        $output .= '<div class="faq-schema-answer">' . do_blocks( $answer ) . '</div>';
+        $output .= '<input type="checkbox" id="' . esc_attr($id) . '" class="faq-schema-toggle" />';
+        $output .= '<label for="' . esc_attr($id) . '" class="faq-schema-question">' . wp_kses_post($question) . '</label>';
+        $output .= '<div class="faq-schema-answer">' . do_blocks($answer) . '</div>';
         $output .= '</div>';
 
         return $output;
@@ -211,41 +224,42 @@ class FAQ_Schema_Block {
     /**
      * Add scripts for FAQ functionality if FAQ blocks are present.
      */
-    public function maybe_add_script() {
+    public function maybe_add_script()
+    {
         if (!$this->has_faq_block) {
             return;
         }
 
         ?>
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set answer heights for CSS transitions
-            document.querySelectorAll('.faq-schema-answer').forEach(answer => {
-                const height = answer.scrollHeight;
-                answer.style.setProperty('--answer-height', height + 'px');
-            });
-            
-            // Make entire FAQ item clickable
-            document.querySelectorAll('.faq-schema-item').forEach(item => {
-                item.style.cursor = 'pointer';
-                item.addEventListener('click', function(e) {
-                    // Prevent default behavior for links inside the FAQ
-                    if (e.target.tagName === 'A') {
-                        return;
-                    }
-                    
-                    // Find the checkbox and toggle it
-                    const checkbox = this.querySelector('.faq-schema-toggle');
-                    if (checkbox) {
-                        checkbox.checked = !checkbox.checked;
-                        
-                        // Create and dispatch change event
-                        const event = new Event('change');
-                        checkbox.dispatchEvent(event);
-                    }
+            document.addEventListener('DOMContentLoaded', function () {
+                // Set answer heights for CSS transitions
+                document.querySelectorAll('.faq-schema-answer').forEach(answer => {
+                    const height = answer.scrollHeight;
+                    answer.style.setProperty('--answer-height', height + 'px');
+                });
+
+                // Make entire FAQ item clickable
+                document.querySelectorAll('.faq-schema-item').forEach(item => {
+                    item.style.cursor = 'pointer';
+                    item.addEventListener('click', function (e) {
+                        // Prevent default behavior for links inside the FAQ
+                        if (e.target.tagName === 'A') {
+                            return;
+                        }
+
+                        // Find the checkbox and toggle it
+                        const checkbox = this.querySelector('.faq-schema-toggle');
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+
+                            // Create and dispatch change event
+                            const event = new Event('change');
+                            checkbox.dispatchEvent(event);
+                        }
+                    });
                 });
             });
-        });
         </script>
         <?php
     }
@@ -253,7 +267,8 @@ class FAQ_Schema_Block {
     /**
      * Reset FAQ items array on each page load.
      */
-    public function reset_faq_items() {
+    public function reset_faq_items()
+    {
         $this->faq_items = array();
         $this->has_faq_block = false;
         $this->styles_loaded = false;
@@ -262,18 +277,19 @@ class FAQ_Schema_Block {
     /**
      * Output schema.org JSON-LD in head.
      */
-    private function parse_blocks($blocks = array()) {
+    private function parse_blocks($blocks = array())
+    {
         global $post;
         $block_data = array();
-        
+
         if (!$post) {
             return $block_data;
         }
-        
+
         if (empty($blocks)) {
             $blocks = isset($post->post_content) ? parse_blocks($post->post_content) : array();
         }
-        
+
         if (!empty($blocks)) {
             foreach ($blocks as $block) {
                 if ('faq-schema-block/faq' === $block['blockName']) {
@@ -289,7 +305,8 @@ class FAQ_Schema_Block {
         return $block_data;
     }
 
-    public function output_schema() {
+    public function output_schema()
+    {
         if (!is_singular()) {
             return;
         }
@@ -302,19 +319,19 @@ class FAQ_Schema_Block {
         // Build schema data
         $schema = array(
             '@context' => 'https://schema.org',
-            '@type'    => 'FAQPage',
+            '@type' => 'FAQPage',
             'mainEntity' => array()
         );
 
         foreach ($faq_blocks as $index => $block) {
             if (!empty($block['attrs']['question']) && !empty($block['attrs']['answer'])) {
                 $faq_item = array(
-                    '@type'          => 'Question',
-                    '@id'            => get_permalink() . '#faq-' . ($index + 1),
-                    'name'           => wp_strip_all_tags($block['attrs']['question']),
+                    '@type' => 'Question',
+                    '@id' => get_permalink() . '#faq-' . ($index + 1),
+                    'name' => wp_strip_all_tags($block['attrs']['question']),
                     'acceptedAnswer' => array(
                         '@type' => 'Answer',
-                        'text'  => wp_strip_all_tags($block['attrs']['answer'])
+                        'text' => wp_strip_all_tags($block['attrs']['answer'])
                     )
                 );
 
@@ -322,12 +339,12 @@ class FAQ_Schema_Block {
                 if (function_exists('is_product') && is_product()) {
                     $faq_item['mainEntityOfPage'] = array(
                         '@type' => 'Product',
-                        '@id'   => get_permalink() . '#product'
+                        '@id' => get_permalink() . '#product'
                     );
                 } else {
                     $faq_item['isPartOf'] = array(
                         '@type' => 'WebPage',
-                        '@id'   => get_permalink() . '#webpage'
+                        '@id' => get_permalink() . '#webpage'
                     );
                 }
 
@@ -338,11 +355,12 @@ class FAQ_Schema_Block {
         if (!empty($schema['mainEntity'])) {
             echo '<script type="application/ld+json">' . wp_json_encode($schema) . '</script>' . "\n";
         }
-	}
+    }
 }
 
 // Initialize the plugin.
-function faq_schema_block_init() {
-	FAQ_Schema_Block::get_instance();
+function faq_schema_block_init()
+{
+    FAQ_Schema_Block::get_instance();
 }
-add_action( 'plugins_loaded', 'faq_schema_block_init' );
+add_action('plugins_loaded', 'faq_schema_block_init');
