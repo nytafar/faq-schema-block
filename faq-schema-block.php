@@ -247,6 +247,10 @@ class FAQ_Schema_Block
                         if (e.target.tagName === 'A') {
                             return;
                         }
+                        // Avoid double-toggling when the label/input is clicked
+                        if (e.target.closest('label') || e.target.closest('input')) {
+                            return;
+                        }
 
                         // Find the checkbox and toggle it
                         const checkbox = this.querySelector('.faq-schema-toggle');
