@@ -1,0 +1,38 @@
+/**
+ * Editor styles for the FAQ Schema Accordion variation.
+ *
+ * Scoped to .faq-schema-accordion so only this variation of the
+ * core/accordion block is affected — other accordions stay untouched.
+ */
+
+/* Visually separate each FAQ item so the structure reads cleanly while editing. */
+.faq-schema-accordion .wp-block-accordion-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: #fff;
+}
+
+.faq-schema-accordion .wp-block-accordion-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Heading typography. Core sets the toggle to font-weight/size: inherit,
+   so we override on the toggle itself (more specific than the inherit chain
+   — no !important needed). */
+.faq-schema-accordion .wp-block-accordion-heading__toggle,
+.faq-schema-accordion .wp-block-accordion-heading__toggle-title {
+    font-weight: 300;
+    font-size: 1.1em;
+}
+
+/* Comfortable hit area / spacing for the heading row in the editor. */
+.faq-schema-accordion .wp-block-accordion-heading__toggle {
+    padding: 12px 14px;
+}
+
+/* Subtle divider + breathing room for the answer panel. */
+.faq-schema-accordion .wp-block-accordion-panel {
+    border-top: 1px solid #f0f0f0;
+    padding: 4px 14px 14px;
+}

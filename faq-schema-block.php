@@ -3,7 +3,7 @@
  * Plugin Name: FAQ Schema Block
  * Plugin URI: https://jellum.net/
  * Description: A simple and clean Gutenberg Block for FAQ with proper schema.org implementation.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: Lasse Jellum
  * Author URI: https://jellum.net/
  * Text Domain: faq-schema-block
@@ -34,27 +34,6 @@ class FAQ_Schema_Block
 
 
     /**
-     * Whether the current page has FAQ blocks.
-     *
-     * @var bool
-     */
-    private $has_faq_block = false;
-
-    /**
-     * Whether the styles have been outputted.
-     *
-     * @var bool
-     */
-    private $styles_loaded = false;
-
-    /**
-     * FAQ items array.
-     *
-     * @var array
-     */
-    private $faq_items = array();
-
-    /**
      * Get an instance of this class.
      */
     public static function get_instance()
@@ -70,276 +49,269 @@ class FAQ_Schema_Block
      */
     public function __construct()
     {
-        add_action('init', array($this, 'register_block'));
+        add_action('enqueue_block_editor_assets', array($this, 'enqueue_editor_assets'));
+        add_action('wp_enqueue_scripts', array($this, 'maybe_dequeue_core_accordion_style'), 20);
         add_action('wp_head', array($this, 'output_schema'), 100);
-        add_filter('render_block', array($this, 'process_faq_block'), 10, 2);
-        add_action('wp_footer', array($this, 'maybe_add_script'));
-        // Reset FAQ items on each page load
-        add_action('wp', array($this, 'reset_faq_items'));
+    }
+
+    /**
+     * Dequeue WordPress core's accordion block stylesheet on pages that contain
+     * the FAQ Schema variation, since the active theme already styles those
+     * selectors. Other accordion blocks on the site keep core's CSS.
+     */
+    public function maybe_dequeue_core_accordion_style()
+    {
+        if (!$this->current_post_has_faq_accordion()) {
+            return;
+        }
+
+        wp_dequeue_style('wp-block-accordion');
+    }
+
+    /**
+     * Cheap check: does the current singular post contain the FAQ variation?
+     * Uses a string search before parsing blocks so non-FAQ pages pay almost
+     * nothing.
+     */
+    private function current_post_has_faq_accordion()
+    {
+        if (!is_singular()) {
+            return false;
+        }
+
+        $post = get_post();
+
+        if (!$post || empty($post->post_content)) {
+            return false;
+        }
+
+        return false !== strpos($post->post_content, 'faq-schema-accordion');
     }
 
     /**
      * Register the FAQ block.
      */
-    public function register_block()
+    public function enqueue_editor_assets()
     {
-        // Register block script.
-        wp_register_script(
-            'faq-schema-block-editor',
-            plugins_url('block/dist/index.js', __FILE__),
-            array('wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor', 'wp-components'),
-            filemtime(plugin_dir_path(__FILE__) . 'block/dist/index.js'),
-            true
-        );
+        $script_path = plugin_dir_path(__FILE__) . 'block/src/index.js';
+        $script_url = plugins_url('block/src/index.js', __FILE__);
 
-        // Register editor styles.
-        wp_register_style(
-            'faq-schema-block-editor-style',
-            plugins_url('block/dist/editor.css', __FILE__),
-            array(),
-            filemtime(plugin_dir_path(__FILE__) . 'block/dist/editor.css')
-        );
-
-        // Register block.
-        register_block_type(
-            'faq-schema-block/faq',
-            array(
-                'editor_script' => 'faq-schema-block-editor',
-                'editor_style' => 'faq-schema-block-editor-style',
-                'render_callback' => array($this, 'render_block'),
-                'attributes' => array(
-                    'question' => array(
-                        'type' => 'string',
-                        'default' => ''
-                    ),
-                    'answer' => array(
-                        'type' => 'string',
-                        'default' => ''
-                    ),
-                    'id' => array(
-                        'type' => 'string',
-                        'default' => ''
-                    )
-                )
-            )
-        );
-
-        // Set translations.
-        if (function_exists('wp_set_script_translations')) {
-            wp_set_script_translations('faq-schema-block-editor', 'faq-schema-block');
-        }
-    }
-
-    /**
-     * Process FAQ block to collect schema data.
-     *
-     * @param string $block_content The block content.
-     * @param array  $block The block data.
-     * @return string The block content.
-     */
-    public function process_faq_block($block_content, $block)
-    {
-        return $block_content;
-    }
-
-    /**
-     * Render the FAQ block.
-     *
-     * @param array $attributes The block attributes.
-     * @return string The block HTML.
-     */
-    public function render_block($attributes)
-    {
-
-        // Get the saved content from attributes
-        $question = isset($attributes['question']) ? $attributes['question'] : '';
-        $answer = isset($attributes['answer']) ? $attributes['answer'] : '';
-
-
-        $id = !empty($attributes['id']) ? $attributes['id'] : 'faq-' . uniqid();
-
-        $output = '';
-
-        // Load styles only once (unless disabled via filter)
-        if (!$this->styles_loaded && !apply_filters('faq_schema_block_disable_inline_styles', false)) {
-            // Inline styles
-            $styles = '
-            .faq-schema-item {
-                margin-bottom: 1em;
-            }
-            .faq-schema-item input[type="checkbox"] {
-                display: none;
-            }
-            .faq-schema-question {
-                display: block;
-                margin: 0;
-                padding: 0.5em 2em 0.5em 0;
-                cursor: pointer;
-                position: relative;
-                font-size: 1.1em;
-            }
-            .faq-schema-question:after {
-                content: "+";
-                position: absolute;
-                right: 0;
-                top: 50%;
-                transform: translateY(-50%);
-                font-size: 1.5em;
-                line-height: 1;
-                color: #666;
-                transition: transform 0.2s ease;
-            }
-            .faq-schema-item input[type="checkbox"]:checked ~ .faq-schema-question:after {
-                content: "−";
-            }
-            .faq-schema-answer {
-                height: 0;
-                overflow: hidden;
-                transition: height 0.25s ease-in-out;
-                line-height: 1.6;
-                box-sizing: border-box;
-                padding-top: 0;
-            }
-            .faq-schema-item input[type="checkbox"]:checked ~ .faq-schema-answer {
-                height: var(--answer-height, auto);
-            }';
-
-            $output .= '<style>' . $styles . '</style>';
-            $this->styles_loaded = true;
-        }
-
-        // Mark that we have an FAQ block
-        $this->has_faq_block = true;
-
-        // Output HTML
-        $output .= '<div class="faq-schema-item">';
-        $output .= '<input type="checkbox" id="' . esc_attr($id) . '" class="faq-schema-toggle" />';
-        $output .= '<label for="' . esc_attr($id) . '" class="faq-schema-question">' . wp_kses_post($question) . '</label>';
-        $output .= '<div class="faq-schema-answer">' . do_blocks($answer) . '</div>';
-        $output .= '</div>';
-
-        return $output;
-    }
-
-    /**
-     * Add scripts for FAQ functionality if FAQ blocks are present.
-     */
-    public function maybe_add_script()
-    {
-        if (!$this->has_faq_block) {
+        if (!file_exists($script_path)) {
             return;
         }
 
-        ?>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                // Set answer heights for CSS transitions
-                document.querySelectorAll('.faq-schema-answer').forEach(answer => {
-                    const height = answer.scrollHeight;
-                    answer.style.setProperty('--answer-height', height + 'px');
-                });
+        wp_enqueue_script(
+            'faq-schema-block-editor',
+            $script_url,
+            array('wp-blocks', 'wp-dom-ready', 'wp-i18n'),
+            filemtime($script_path),
+            true
+        );
 
-                // Make entire FAQ item clickable
-                document.querySelectorAll('.faq-schema-item').forEach(item => {
-                    item.style.cursor = 'pointer';
-                    item.addEventListener('click', function (e) {
-                        // Prevent default behavior for links inside the FAQ
-                        if (e.target.tagName === 'A') {
-                            return;
-                        }
-                        // Avoid double-toggling when the label/input is clicked
-                        if (e.target.closest('label') || e.target.closest('input')) {
-                            return;
-                        }
-
-                        // Find the checkbox and toggle it
-                        const checkbox = this.querySelector('.faq-schema-toggle');
-                        if (checkbox) {
-                            checkbox.checked = !checkbox.checked;
-
-                            // Create and dispatch change event
-                            const event = new Event('change');
-                            checkbox.dispatchEvent(event);
-                        }
-                    });
-                });
-            });
-        </script>
-        <?php
-    }
-
-    /**
-     * Reset FAQ items array on each page load.
-     */
-    public function reset_faq_items()
-    {
-        $this->faq_items = array();
-        $this->has_faq_block = false;
-        $this->styles_loaded = false;
-    }
-
-    /**
-     * Output schema.org JSON-LD in head.
-     */
-    private function parse_blocks($blocks = array())
-    {
-        global $post;
-        $block_data = array();
-
-        if (!$post) {
-            return $block_data;
+        if (function_exists('wp_set_script_translations')) {
+            wp_set_script_translations('faq-schema-block-editor', 'faq-schema-block');
         }
 
-        if (empty($blocks)) {
-            $blocks = isset($post->post_content) ? parse_blocks($post->post_content) : array();
-        }
+        $style_path = plugin_dir_path(__FILE__) . 'block/css/editor.css';
+        $style_url = plugins_url('block/css/editor.css', __FILE__);
 
-        if (!empty($blocks)) {
-            foreach ($blocks as $block) {
-                if ('faq-schema-block/faq' === $block['blockName']) {
-                    $block_data[] = $block;
-                    continue;
-                }
-                // Search in nested blocks
-                if (!empty($block['innerBlocks'])) {
-                    $block_data = array_merge($block_data, $this->parse_blocks($block['innerBlocks']));
-                }
+        if (file_exists($style_path)) {
+            wp_enqueue_style(
+                'faq-schema-block-editor',
+                $style_url,
+                array(),
+                filemtime($style_path)
+            );
+        }
+    }
+
+    private function collect_faq_accordions($blocks)
+    {
+        $accordions = array();
+
+        foreach ($blocks as $block) {
+            if ($this->is_faq_accordion($block)) {
+                $accordions[] = $block;
+            }
+
+            if (!empty($block['innerBlocks'])) {
+                $accordions = array_merge($accordions, $this->collect_faq_accordions($block['innerBlocks']));
             }
         }
-        return $block_data;
+
+        return $accordions;
+    }
+
+    private function is_faq_accordion($block)
+    {
+        if (!isset($block['blockName']) || 'core/accordion' !== $block['blockName']) {
+            return false;
+        }
+
+        return $this->block_has_class($block, 'faq-schema-accordion');
+    }
+
+    private function block_has_class($block, $class_name)
+    {
+        $attrs_class_name = isset($block['attrs']['className']) ? $block['attrs']['className'] : '';
+
+        if ($this->class_list_contains($attrs_class_name, $class_name)) {
+            return true;
+        }
+
+        $html = isset($block['innerHTML']) ? $block['innerHTML'] : '';
+
+        if ('' === $html) {
+            return false;
+        }
+
+        return (bool) preg_match('/class=(["\'])(?=[^"\']*\b' . preg_quote($class_name, '/') . '\b)[^"\']*\1/i', $html);
+    }
+
+    private function class_list_contains($class_list, $class_name)
+    {
+        return in_array($class_name, preg_split('/\s+/', trim($class_list)), true);
+    }
+
+    private function extract_faq_items($accordion_block)
+    {
+        $items = array();
+
+        if (empty($accordion_block['innerBlocks'])) {
+            return $items;
+        }
+
+        foreach ($accordion_block['innerBlocks'] as $item_block) {
+            if (!isset($item_block['blockName']) || 'core/accordion-item' !== $item_block['blockName']) {
+                continue;
+            }
+
+            $heading_block = $this->find_child_block($item_block, 'core/accordion-heading');
+            $panel_block = $this->find_child_block($item_block, 'core/accordion-panel');
+
+            if (!$heading_block || !$panel_block) {
+                continue;
+            }
+
+            $question = $this->extract_heading_text($heading_block);
+            $answer = $this->extract_panel_text($panel_block);
+
+            if ('' === $question || '' === $answer) {
+                continue;
+            }
+
+            $items[] = array(
+                'question' => $question,
+                'answer' => $answer,
+            );
+        }
+
+        return $items;
+    }
+
+    private function find_child_block($block, $block_name)
+    {
+        if (empty($block['innerBlocks'])) {
+            return null;
+        }
+
+        foreach ($block['innerBlocks'] as $inner_block) {
+            if (isset($inner_block['blockName']) && $block_name === $inner_block['blockName']) {
+                return $inner_block;
+            }
+        }
+
+        return null;
+    }
+
+    private function extract_heading_text($heading_block)
+    {
+        if (!empty($heading_block['attrs']['title'])) {
+            return $this->normalize_schema_text($heading_block['attrs']['title']);
+        }
+
+        $html = isset($heading_block['innerHTML']) ? $heading_block['innerHTML'] : serialize_block($heading_block);
+        $title_html = $this->extract_html_by_class($html, 'wp-block-accordion-heading__toggle-title');
+
+        if ('' === $title_html) {
+            $title_html = $html;
+        }
+
+        return $this->normalize_schema_text($title_html);
+    }
+
+    private function extract_panel_text($panel_block)
+    {
+        $html = '';
+
+        if (!empty($panel_block['innerBlocks'])) {
+            foreach ($panel_block['innerBlocks'] as $inner_block) {
+                $html .= render_block($inner_block);
+            }
+        } elseif (!empty($panel_block['innerHTML'])) {
+            $html = $panel_block['innerHTML'];
+        }
+
+        return $this->normalize_schema_text($html);
+    }
+
+    private function extract_html_by_class($html, $class_name)
+    {
+        $pattern = '/<([a-z0-9]+)\b[^>]*class=(["\'])(?=[^"\']*\b' . preg_quote($class_name, '/') . '\b)[^"\']*\2[^>]*>(.*?)<\/\1>/is';
+
+        if (!preg_match($pattern, $html, $matches)) {
+            return '';
+        }
+
+        return $matches[3];
+    }
+
+    private function normalize_schema_text($html)
+    {
+        $text = wp_strip_all_tags($html);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, get_bloginfo('charset'));
+        $text = preg_replace('/\s+/', ' ', $text);
+
+        return trim($text);
     }
 
     public function output_schema()
     {
-        if (!is_singular()) {
+        if (!$this->current_post_has_faq_accordion()) {
             return;
         }
 
-        $faq_blocks = $this->parse_blocks();
-        if (empty($faq_blocks)) {
+        $post = get_post();
+        $blocks = parse_blocks($post->post_content);
+        $faq_accordions = $this->collect_faq_accordions($blocks);
+
+        if (empty($faq_accordions)) {
             return;
         }
 
-        // Build schema data
         $schema = array(
             '@context' => 'https://schema.org',
             '@type' => 'FAQPage',
             'mainEntity' => array()
         );
 
-        foreach ($faq_blocks as $index => $block) {
-            if (!empty($block['attrs']['question']) && !empty($block['attrs']['answer'])) {
+        $items = array();
+
+        foreach ($faq_accordions as $accordion) {
+            $items = array_merge($items, $this->extract_faq_items($accordion));
+        }
+
+        foreach ($items as $index => $item) {
                 $faq_item = array(
                     '@type' => 'Question',
                     '@id' => get_permalink() . '#faq-' . ($index + 1),
-                    'name' => wp_strip_all_tags($block['attrs']['question']),
+                    'name' => $item['question'],
                     'acceptedAnswer' => array(
                         '@type' => 'Answer',
-                        'text' => wp_strip_all_tags($block['attrs']['answer'])
+                        'text' => $item['answer']
                     )
                 );
 
-                // Add product reference only on WooCommerce product pages
                 if (function_exists('is_product') && is_product()) {
                     $faq_item['mainEntityOfPage'] = array(
                         '@type' => 'Product',
@@ -353,11 +325,10 @@ class FAQ_Schema_Block
                 }
 
                 $schema['mainEntity'][] = $faq_item;
-            }
         }
 
         if (!empty($schema['mainEntity'])) {
-            echo '<script type="application/ld+json">' . wp_json_encode($schema) . '</script>' . "\n";
+            echo '<script type="application/ld+json" id="faq-schema-block-json-ld">' . wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>' . "\n";
         }
     }
 }

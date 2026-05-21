@@ -1,47 +1,38 @@
-const { registerBlockType } = wp.blocks;
-const { RichText } = wp.blockEditor;
+const { getBlockType, registerBlockVariation } = wp.blocks;
 const { __ } = wp.i18n;
 
-registerBlockType('faq-schema-block/faq', {
-    title: __('FAQ Schema', 'faq-schema-block'),
-    icon: 'editor-help',
-    category: 'common',
-    attributes: {
-        question: {
-            type: 'string',
-            default: ''
-        },
-        answer: {
-            type: 'string',
-            default: 'Your answer here...'
-        },
-        id: {
-            type: 'string',
-            default: ''
-        }
-    },
+const FAQ_CLASS = 'faq-schema-accordion';
 
-    edit: ({ attributes, setAttributes }) => (
-        <>
-            <RichText
-                tagName="h3"
-                value={attributes.question || ''}
-                onChange={question => setAttributes({ question })}
-                placeholder="Enter question..."
-            />
-            <RichText
-                tagName="p"
-                value={attributes.answer || ''}
-                onChange={answer => setAttributes({ answer })}
-                placeholder="Enter answer..."
-            />
-        </>
-    ),
+const hasFaqClass = className => (className || '').split(/\s+/).includes(FAQ_CLASS);
 
-    save: ({ attributes }) => (
-        <div className="wp-block-faq-schema-block-faq">
-            <RichText.Content tagName="h3" value={attributes.question || ''} />
-            <RichText.Content tagName="p" value={attributes.answer || ''} />
-        </div>
-    )
+wp.domReady(() => {
+    if (!getBlockType('core/accordion')) {
+        return;
+    }
+
+    registerBlockVariation('core/accordion', {
+        name: 'faq-schema-block/faq-accordion',
+        title: __('FAQ Schema Accordion', 'faq-schema-block'),
+        description: __('Native accordion markup with FAQPage schema output.', 'faq-schema-block'),
+        icon: 'editor-help',
+        attributes: {
+            className: FAQ_CLASS,
+            headingLevel: 3,
+            autoclose: false
+        },
+        innerBlocks: [
+            ['core/accordion-item', { openByDefault: false }, [
+                ['core/accordion-heading', {
+                    title: __('Question with highlighted keywords', 'faq-schema-block')
+                }],
+                ['core/accordion-panel', {}, [
+                    ['core/paragraph', {
+                        placeholder: __('Write the answer…', 'faq-schema-block')
+                    }]
+                ]]
+            ]]
+        ],
+        isActive: attributes => hasFaqClass(attributes.className),
+        scope: ['inserter', 'transform']
+    });
 });
