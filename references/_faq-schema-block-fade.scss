@@ -1,0 +1,216 @@
+// FAQ Schema Block Styles
+// Clean styling with focus on indentation and spacing
+
+.faq-schema-item {
+    /* margin-bottom: 1.5rem; */
+    position: relative;
+    background-color: hsl(88deg 40% 95% / 0%);
+    padding: 0.2rem 1.25rem 1rem 1.25rem;
+    border-radius: var(--border-radius);
+
+
+    // Hide the checkbox toggle
+    input[type="checkbox"] {
+        display: none;
+    }
+
+    // Question styling (this is the clickable label)
+    .faq-schema-question {
+        display: block;
+        margin: 0;
+        padding: 0.5rem 2rem 0.5rem 0;
+        cursor: pointer;
+        position: relative;
+        font-weight: 600;
+        font-size: 1.05em;
+        color: var(--accent-color);
+        transition: color 0.2s ease;
+
+        // Plus/minus toggle icon
+        &::after {
+            content: '+';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            line-height: 1;
+            color: var(--accent-color);
+            transition: transform 0.2s ease;
+        }
+
+        &:hover {
+            color: var(--link-color);
+        }
+    }
+
+    // Change to minus when expanded
+    input[type="checkbox"]:checked~.faq-schema-question::after {
+        content: '−';
+    }
+
+    // Answer styling
+    .faq-schema-answer {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transition: max-height 0.5s ease, opacity 0.3s ease;
+        position: relative;
+
+        // Content styling
+        >* {
+            margin-top: 0;
+            margin-bottom: 1rem;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        p {
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        ul,
+        ol {
+            padding-left: 1.5rem;
+
+            li {
+                margin-bottom: 0.5rem;
+                line-height: 1.5;
+            }
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+
+            &:hover {
+                color: var(--accent-color);
+                text-decoration-thickness: 2px;
+            }
+        }
+
+        code {
+            background: var(--bg-code);
+            padding: 0.125rem 0.25rem;
+            border-radius: 2px;
+            font-size: 0.9em;
+        }
+    }
+
+    // First line preview for collapsed state
+    input[type="checkbox"]:not(:checked)~.faq-schema-answer {
+        max-height: 4.5rem; // Show approximately first line
+        opacity: 1;
+        padding-top: 0.5rem;
+        //    padding-bottom: 0.75rem;
+        //    margin-top: 0.5rem;
+        border-top: 1px solid var(--border-faq-light);
+        height: 2em;
+
+        // Gradient overlay
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 3rem;
+            background: var(--gradient-fade-out);
+            pointer-events: none;
+        }
+    }
+
+    // Expanded state
+    input[type="checkbox"]:checked~.faq-schema-answer {
+        max-height: 2000px; // Large enough for any content
+        opacity: 1;
+        padding-top: 0.75rem;
+
+        border-top: 1px solid var(--border-faq-medium);
+        transition: max-height 1s ease, opacity 0.3s ease;
+
+        &::after {
+            display: none;
+        }
+    }
+
+    // Focus states for accessibility
+    input[type="checkbox"]:focus-visible~.faq-schema-question {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 2px;
+    }
+}
+
+// Multiple FAQ items styling
+.faq-schema-item+.faq-schema-item {
+    margin-top: .5rem;
+}
+
+// Container for multiple FAQs
+.wp-block-group:has(.faq-schema-item),
+.entry-content:has(.faq-schema-item) {
+    .faq-schema-item:first-of-type {
+        margin-top: 1.5rem;
+    }
+
+    .faq-schema-item:last-of-type {
+        margin-bottom: 2.5rem;
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+    .faq-schema-item {
+        padding: 0.75rem 1rem;
+
+        .faq-schema-question {
+            font-size: 1rem;
+        }
+    }
+}
+
+// Dark mode support (if theme supports it)
+/* @media (prefers-color-scheme: dark) {
+    .faq-schema-item {
+        background-color: hsla(24, 30%, 15%, 0.5);
+        
+        .faq-schema-question {
+            color: hsl(24, 48%, 70%);
+            
+            &:hover {
+                color: hsl(24, 48%, 80%);
+            }
+            
+            &::after {
+                color: hsl(24, 48%, 70%);
+            }
+        }
+        
+        .faq-schema-answer {
+            border-top-color: hsla(24, 30%, 30%, 0.5);
+            
+            p, li {
+                color: hsl(22, 11%, 75%);
+            }
+            
+            code {
+                background: hsl(22, 11%, 15%);
+            }
+        }
+        
+        // Dark mode preview gradient
+        input[type="checkbox"]:not(:checked) ~ .faq-schema-answer::after {
+            background: linear-gradient(to bottom, 
+                hsla(24, 30%, 15%, 0) 0%, 
+                hsla(24, 30%, 15%, 0.8) 60%, 
+                hsla(24, 30%, 15%, 1) 100%
+            );
+        }
+    }
+}
+ */

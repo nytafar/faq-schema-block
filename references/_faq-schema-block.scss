@@ -1,0 +1,165 @@
+// FAQ Schema Block Styles
+// Simple artisanal craft styling that extends plugin defaults.
+
+.faq-schema-item {
+    position: relative;
+    padding: 0.9rem 1.2rem;
+    background: var(--bg-color-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 14px var(--shadow-color);
+
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        width: 11px;
+        height: 11px;
+        border: 1px solid var(--border-color);
+        opacity: 0.45;
+        pointer-events: none;
+    }
+
+    &::before {
+        top: 7px;
+        left: 7px;
+        border-right: 0;
+        border-bottom: 0;
+    }
+
+    &::after {
+        right: 7px;
+        bottom: 7px;
+        border-left: 0;
+        border-top: 0;
+    }
+
+    input[type="checkbox"] {
+        display: none;
+    }
+
+    .faq-schema-question {
+        display: block;
+        margin: 0;
+        padding: 0.2rem 2rem 0.2rem 0;
+        cursor: pointer;
+        position: relative;
+        color: var(--text-color-dark);
+        font-weight: 400;
+        line-height: 1.4;
+        transition: color 0.2s ease;
+        strong {
+            font-weight: 600;
+        }
+        &::after {
+            content: "+";
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.35em;
+            line-height: 1;
+            color: var(--border-color);
+            transition: color 0.2s ease;
+        }
+
+        &:hover {
+            color: var(--link-color);
+
+            &::after {
+                color: var(--link-color);
+            }
+        }
+    }
+
+    input[type="checkbox"]:checked ~ .faq-schema-question::after {
+        content: "−";
+    }
+
+    .faq-schema-answer {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        padding-top: 0;
+        margin-top: 0;
+        border-top: 0;
+        transition: max-height 0.35s ease, opacity 0.2s ease, margin-top 0.2s ease, padding-top 0.2s ease;
+
+        > * {
+            margin-top: 0;
+            margin-bottom: 0.9rem;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        p,
+        li {
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        ul,
+        ol {
+            padding-left: 1.25rem;
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: none;
+            border-bottom: 1px solid var(--border-color-inset);
+
+            &:hover {
+                border-bottom-color: var(--link-color);
+            }
+        }
+
+        code {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color-light);
+            border-radius: 2px;
+            padding: 0.1rem 0.3rem;
+            font-size: 0.9em;
+        }
+    }
+
+    // Hidden when collapsed. No preview/fade state to reduce clutter.
+    input[type="checkbox"]:checked ~ .faq-schema-answer {
+        max-height: 2000px;
+        opacity: 1;
+        margin-top: 0.55rem;
+        padding-top: 0.7rem;
+        border-top: 1px solid var(--border-faq-medium);
+    }
+
+    input[type="checkbox"]:focus-visible ~ .faq-schema-question {
+        outline: 2px solid var(--border-color);
+        outline-offset: 2px;
+    }
+}
+
+.faq-schema-item + .faq-schema-item {
+    margin-top: 0.65rem;
+}
+
+.wp-block-group:has(.faq-schema-item),
+.entry-content:has(.faq-schema-item) {
+    .faq-schema-item:first-of-type {
+        margin-top: 1.5rem;
+    }
+
+    .faq-schema-item:last-of-type {
+        margin-bottom: 2.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .faq-schema-item {
+        padding: 0.8rem 1rem;
+
+        .faq-schema-question {
+            font-size: 1rem;
+        }
+    }
+}
