@@ -2,7 +2,7 @@
 
 A clean, performant FAQ block with smart schema.org implementation, optimized for both regular pages and WooCommerce products.
 
-![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![PHP Version](https://img.shields.io/badge/php-%3E%3D7.0-green.svg)
 ![WordPress Version](https://img.shields.io/badge/wordpress-6.5%20tested-green.svg)
 
