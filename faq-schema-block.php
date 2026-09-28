@@ -328,7 +328,7 @@ class FAQ_Schema_Block
         }
 
         if (!empty($schema['mainEntity'])) {
-            echo '<script type="application/ld+json" id="faq-schema-block-json-ld">' . wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>' . "\n";
+            echo '<script type="application/ld+json" id="faq-schema-block-json-ld">' . wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . '</script>' . "\n";
         }
     }
 }
