@@ -1,14 +1,15 @@
 <?php
 /**
  * Plugin Name: FAQ Schema Block
- * Plugin URI: https://jellum.net/
- * Description: A simple and clean Gutenberg Block for FAQ with proper schema.org implementation.
+ * Plugin URI: https://github.com/nytafar/faq-schema-block
+ * Description: A core/accordion block variation that outputs its questions and answers as schema.org FAQPage JSON-LD.
  * Version: 1.1.0
  * Author: Lasse Jellum
- * Author URI: https://jellum.net/
+ * Author URI: https://jellum.net
  * Text Domain: faq-schema-block
- * License: GPL-2.0+
- * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
+ * Requires at least: 6.9
+ * Requires PHP: 7.2
+ * License: GPL-2.0-or-later
  *
  * @package FAQ_Schema_Block
  */
@@ -17,6 +18,8 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+define('FAQ_SCHEMA_BLOCK_VERSION', '1.1.0');
 
 /**
  * Main FAQ Schema Block Class

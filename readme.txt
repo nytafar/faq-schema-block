@@ -1,85 +1,54 @@
 === FAQ Schema Block ===
 Contributors: lassejellum
-Tags: faq, schema, structured data, block, gutenberg, woocommerce
-Requires at least: 5.0
-Tested up to: 6.5
+Tags: faq, schema, structured data, accordion, block
+Requires at least: 6.9
+Tested up to: 7.1
+Requires PHP: 7.2
 Stable tag: 1.1.0
-Requires PHP: 7.0
-License: GPLv2 or later
+License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A clean, performant FAQ block with smart schema.org implementation, optimized for both regular pages and WooCommerce products.
+A core/accordion block variation that outputs its questions and answers as schema.org FAQPage JSON-LD.
 
 == Description ==
 
-FAQ Schema Block provides a minimalist yet powerful way to add FAQs to your WordPress site with intelligent schema.org implementation that adapts to your content type.
+A variation of WordPress core's Accordion block (`core/accordion`, WordPress 6.9+). Insert "FAQ Schema Accordion" (or
+transform an existing accordion): each accordion item's heading is a question and its panel is the answer.
 
-**Key Features:**
-
-* Smart schema detection - automatically adapts between product and regular page schemas
-* Clean, performant accordion functionality with pure CSS
-* Proper schema.org JSON-LD implementation in the head section
-* WooCommerce integration - links FAQs directly to product schema
-* Zero dependencies - no external libraries required
-* Minimal styling - adapts to your theme seamlessly
-
-**Technical Features:**
-
-* Direct block parsing for reliable schema generation
-* Efficient CSS-only animations for better performance
-* Proper schema relationships (mainEntityOfPage for products, isPartOf for regular pages)
-* Semantic HTML output with proper ARIA attributes
-* Inline styles only on pages that use the block
+On singular pages that contain it, the plugin outputs one schema.org `FAQPage` JSON-LD script in `<head>`, collected from
+every FAQ accordion on the page. The markup is core's own; the plugin only adds the marker class `faq-schema-accordion`,
+and dequeues core's accordion stylesheet on those pages so the theme styles them.
 
 == Installation ==
 
-1. Upload the plugin files to the `/wp-content/plugins/faq-schema-block` directory, or install the plugin through the WordPress plugins screen directly.
-2. Activate the plugin through the 'Plugins' screen in WordPress
-3. Use the FAQ Schema block in any post, page, or WooCommerce product
-
-== Frequently Asked Questions ==
-
-= How does the schema implementation work? =
-
-The plugin parses blocks directly from the page content and outputs a single, aggregated schema.org JSON-LD script in the head. On WooCommerce product pages, it automatically links FAQs to the product schema for better SEO integration.
-
-= How does it handle styling? =
-
-The plugin uses minimal, CSS-only styling with proper box-sizing and em units. All animations are CSS-based for optimal performance, and styles are inlined only where needed.
-
-= Does it affect page performance? =
-
-No, the plugin is designed for maximum performance:
-* CSS-only animations
-* No external dependencies
-* Minimal DOM manipulation
-* Efficient block parsing
-* Inline styles only on relevant pages
+1. Upload to `/wp-content/plugins/faq-schema-block/`
+2. Activate through WordPress plugins screen
+3. Use in any post, page, or WooCommerce product
 
 == Changelog ==
 
-= 1.0.1 =
-* Added smart schema detection for WooCommerce products
-* Improved accordion animation performance
-* Fixed schema output location to head
-* Removed unnecessary styling
-* Added proper product schema relationships
+= 1.1.0 – 2026-05-21 =
 
-= 1.0.0 =
-* Initial release
+**Changed**
+* Rewritten as a `core/accordion` block variation ("FAQ Schema Accordion", marker class `faq-schema-accordion`) instead of a custom block; FAQPage JSON-LD is built from its accordion items. Requires WordPress 6.9.
+* Core's accordion stylesheet is dequeued on pages with the FAQ variation (the theme styles it); other accordions keep it.
 
-== Screenshots ==
+**Removed**
+* The custom block's webpack build and npm package files.
 
-1. The FAQ block in the editor
-2. FAQ blocks displayed on the front end
-3. The schema.org structured data generated in the head
+= 1.0.1 – 2025-06-02 =
 
-== Changelog ==
+**Added**
+* Smart schema detection for WooCommerce products, with product schema relationships.
 
-= 1.0.0 =
-* Initial release
+**Changed**
+* Improved accordion animation performance.
+* Removed unnecessary styling.
 
-== Upgrade Notice ==
+**Fixed**
+* Schema is output in the head.
 
-= 1.0.0 =
-Initial release
+= 1.0.0 – 2025-06-02 =
+
+**Added**
+* Initial release.

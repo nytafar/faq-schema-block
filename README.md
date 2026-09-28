@@ -1,32 +1,13 @@
 # FAQ Schema Block
 
-A clean, performant FAQ block with smart schema.org implementation, optimized for both regular pages and WooCommerce products.
+## Description
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
-![PHP Version](https://img.shields.io/badge/php-%3E%3D7.0-green.svg)
-![WordPress Version](https://img.shields.io/badge/wordpress-6.5%20tested-green.svg)
+A variation of WordPress core's Accordion block (`core/accordion`, WordPress 6.9+). Insert "FAQ Schema Accordion" (or
+transform an existing accordion): each accordion item's heading is a question and its panel is the answer.
 
-## Features
-
-### Smart Schema Implementation
-- Automatic content-type detection (Product vs Regular pages)
-- Proper schema relationships in JSON-LD
-- WooCommerce product schema integration
-- Clean, semantic HTML output
-
-### Performance Focused
-- CSS-only animations
-- Zero JavaScript dependencies
-- Minimal DOM manipulation
-- Efficient block parsing
-- Inline styles only where needed
-
-### Developer Friendly
-- Direct block parsing API
-- Clean, documented code
-- Proper schema relationships
-- Semantic HTML with ARIA
-- Minimal styling footprint
+On singular pages that contain it, the plugin outputs one schema.org `FAQPage` JSON-LD script in `<head>`, collected from
+every FAQ accordion on the page. The markup is core's own; the plugin only adds the marker class `faq-schema-accordion`,
+and dequeues core's accordion stylesheet on those pages so the theme styles them.
 
 ## Installation
 
@@ -61,24 +42,11 @@ The plugin implements two types of schema relationships:
 }
 ```
 
-### Performance
-- CSS-only accordion animations
-- No external dependencies
-- Minimal DOM operations
-- Efficient block parsing
-- Inline styles only on relevant pages
+## Releasing
 
-## Changelog
-
-### 1.0.1
-- Added smart schema detection for WooCommerce products
-- Improved accordion animation performance
-- Fixed schema output location to head
-- Removed unnecessary styling
-- Added proper product schema relationships
-
-### 1.0.0
-- Initial release
+Suite kit: https://github.com/nytafar/kaupang-docs/tree/main/kit. The header `Version:` is the only version source; the
+pre-commit hook syncs `FAQ_SCHEMA_BLOCK_VERSION` and regenerates readme.txt (never edit it). Add lines under
+`## [Unreleased]` in CHANGELOG.md, then release with `sudo -u myrvann tools/release patch|minor|major [--push]`.
 
 ## License
-GPLv2 or later
+GPL-2.0-or-later
