@@ -92,10 +92,17 @@ class FAQ_Schema_Block
     }
 
     /**
-     * Register the FAQ block.
+     * Register the FAQ variation in post editors only. The JSON-LD is built from post content, so the site and
+     * widget editors (templates, widget areas) get nothing.
      */
     public function enqueue_editor_assets()
     {
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+
+        if (!$screen || 'post' !== $screen->base) {
+            return;
+        }
+
         $script_path = plugin_dir_path(__FILE__) . 'block/src/index.js';
         $script_url = plugins_url('block/src/index.js', __FILE__);
 

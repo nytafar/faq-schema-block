@@ -1,6 +1,7 @@
 <?php
 /**
- * Runnable check: the FAQPage JSON-LD must not let answer text close its <script> tag.
+ * Runnable check: the FAQPage JSON-LD must not let answer text close its <script> tag, it appears only on posts
+ * that carry the FAQ variation, and the editor assets load only in post editors (loading Track 5/6).
  *
  *   sudo -u <siteuser> wp --path=<docroot> eval-file wp-content/plugins/faq-schema-block/tests/check.php
  *
@@ -44,3 +45,39 @@ if ( ! is_array( $data ) || false === strpos( (string) ( $data['mainEntity'][0][
 	$fail( 'answer text did not round-trip through the JSON-LD (check is vacuous)' );
 }
 echo "ok  faq JSON-LD escapes </script and round-trips the answer\n";
+
+// No JSON-LD where no FAQ accordion is in the content (accordion without the marker class), nor off singular views.
+$post = new WP_Post( (object) array( 'ID' => 0, 'post_type' => 'page', 'post_content' => str_replace( 'faq-schema-accordion', 'plain', $content ), 'filter' => 'raw' ) );
+ob_start();
+FAQ_Schema_Block::get_instance()->output_schema();
+'' === ob_get_clean() || $fail( 'JSON-LD on a post without the FAQ variation' );
+$post                  = new WP_Post( (object) array( 'ID' => 0, 'post_type' => 'page', 'post_content' => $content, 'filter' => 'raw' ) );
+$wp_query->is_singular = false;
+ob_start();
+FAQ_Schema_Block::get_instance()->output_schema();
+'' === ob_get_clean() || $fail( 'JSON-LD on a non-singular view' );
+echo "ok  JSON-LD only on singular posts with the FAQ variation\n";
+
+// Admin precision (Pattern E): no admin_enqueue_scripts callbacks at all; editor assets only on post-editor screens.
+foreach ( $GLOBALS['wp_filter']['admin_enqueue_scripts']->callbacks ?? array() as $cbs ) {
+	foreach ( $cbs as $cb ) {
+		if ( is_array( $cb['function'] ) && $cb['function'][0] instanceof FAQ_Schema_Block ) {
+			$fail( 'admin_enqueue_scripts callback registered (assets would reach every admin screen)' );
+		}
+	}
+}
+require_once ABSPATH . 'wp-admin/includes/class-wp-screen.php';
+require_once ABSPATH . 'wp-admin/includes/screen.php';
+$queued = static function () {
+	return in_array( 'faq-schema-block-editor', wp_scripts()->queue, true ) || in_array( 'faq-schema-block-editor', wp_styles()->queue, true );
+};
+foreach ( array( 'site-editor', 'widgets', 'index' ) as $foreign ) {
+	set_current_screen( $foreign );
+	FAQ_Schema_Block::get_instance()->enqueue_editor_assets();
+	$queued() && $fail( "editor assets queued on the {$foreign} screen" );
+}
+set_current_screen( 'page' );
+'post' === get_current_screen()->base || $fail( 'test setup: page screen base is ' . get_current_screen()->base );
+FAQ_Schema_Block::get_instance()->enqueue_editor_assets();
+$queued() || $fail( 'editor assets missing in the page editor (check is vacuous)' );
+echo "ok  editor assets only in post editors (not site-editor, widgets, dashboard)\n";

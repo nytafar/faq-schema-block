@@ -8,6 +8,7 @@ All notable changes to this plugin are documented here. Format: [Keep a Changelo
 - FAQPage JSON-LD is encoded with `JSON_HEX_TAG | JSON_HEX_AMP`, so answer text containing `</script>` (e.g. typed as `&lt;/script&gt;`) can no longer close the script tag (stored XSS). Regression check: `tests/check.php` (`wp eval-file`).
 
 ### Changed
+- Editor assets load only in post editors (screen base `post`), no longer in the site editor or widgets screen, where FAQ content would produce no JSON-LD. `tests/check.php` now also proves JSON-LD only on singular posts with the variation and the editor gate. README `## Load map`.
 - Adopted suite kit v2: `FAQ_SCHEMA_BLOCK_VERSION` constant synced from the header, generated readme.txt, `tools/release`; standard header (GitHub Plugin URI, License GPL-2.0-or-later, Requires at least 6.9, Requires PHP 7.2) and a Description of what the plugin is now.
 
 ## [1.1.0] - 2026-05-21

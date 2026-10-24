@@ -42,6 +42,19 @@ The plugin implements two types of schema relationships:
 }
 ```
 
+## Load map
+
+One file, no options, no front-end assets of its own.
+
+| Context | Files | Assets | Autoloaded options |
+|---|---|---|---|
+| Any guest page | main file (1) | none. On a singular post whose content has the FAQ variation it prints the FAQPage JSON-LD in `<head>` and dequeues core's `wp-block-accordion` style | none |
+| Post editor (screen base `post`, any post type) | main file | `faq-schema-block-editor` script + style (registers the variation) | none |
+| Site editor, widgets, other admin screens | main file | none: the JSON-LD is built from post content only, so the variation isn't offered in templates | none |
+
+No budget file: the default (2 files, no assets) holds on every page type. Check (read-only, exits non-zero on failure):
+`gp wp <site> eval-file wp-content/plugins/faq-schema-block/tests/check.php`.
+
 ## Releasing
 
 Suite kit: https://github.com/nytafar/kaupang-docs/tree/main/kit. The header `Version:` is the only version source; the
