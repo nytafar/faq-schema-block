@@ -81,3 +81,13 @@ set_current_screen( 'page' );
 FAQ_Schema_Block::get_instance()->enqueue_editor_assets();
 $queued() || $fail( 'editor assets missing in the page editor (check is vacuous)' );
 echo "ok  editor assets only in post editors (not site-editor, widgets, dashboard)\n";
+
+// Storefront load budget (conventions.md §5B).
+if (class_exists('WP_CLI') && is_array(WP_CLI::get_runner()->find_command_to_run(['kaupang-assets', 'audit']))) {
+	$audit = WP_CLI::runcommand('kaupang-assets audit --plugins=faq-schema-block --budget', ['return' => 'all', 'exit_error' => false]);
+	echo $audit->stdout . "\n";
+	$audit->return_code === 0 && $audit->stdout !== '' || $fail('kaupang-assets audit --plugins=faq-schema-block --budget exits 0' . ': ' . trim($audit->stderr));
+	echo "ok  kaupang-assets audit --plugins=faq-schema-block --budget exits 0\n";
+} else {
+	echo "  skip storefront budget: `wp kaupang-assets audit` is not available here\n";
+}
