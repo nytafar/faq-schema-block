@@ -164,8 +164,24 @@ class FAQ_Schema_Block
         if (!$this->styles_loaded && !apply_filters('faq_schema_block_disable_inline_styles', false)) {
             // Inline styles
             $styles = '
+            .faq-schema-wrapper {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1.5em;
+                padding: 2em 1em;
+                max-width: 1400px;
+                margin: 0 auto;
+                box-sizing: border-box;
+            }
+            @media (min-width: 1080px) {
+                .faq-schema-wrapper {
+                    grid-template-columns: 1fr 1fr;
+                    gap: 2em;
+                    padding: 3em 2em;
+                }
+            }
             .faq-schema-item {
-                margin-bottom: 1em;
+                margin-bottom: 0;
             }
             .faq-schema-item input[type="checkbox"] {
                 display: none;
