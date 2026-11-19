@@ -4,6 +4,8 @@ All notable changes to this plugin are documented here. Format: [Keep a Changelo
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-19
+
 ### Security
 - check.php runs the load budget audit.
 - FAQPage JSON-LD is encoded with `JSON_HEX_TAG | JSON_HEX_AMP`, so answer text containing `</script>` (e.g. typed as `&lt;/script&gt;`) can no longer close the script tag (stored XSS). Regression check: `tests/check.php` (`wp eval-file`).

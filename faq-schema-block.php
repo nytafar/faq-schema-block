@@ -3,7 +3,7 @@
  * Plugin Name: FAQ Schema Block
  * Plugin URI: https://github.com/nytafar/faq-schema-block
  * Description: A core/accordion block variation that outputs its questions and answers as schema.org FAQPage JSON-LD.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Lasse Jellum
  * Author URI: https://jellum.net
  * Text Domain: faq-schema-block
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FAQ_SCHEMA_BLOCK_VERSION', '1.1.0');
+define('FAQ_SCHEMA_BLOCK_VERSION', '1.1.1');
 
 /**
  * Main FAQ Schema Block Class
